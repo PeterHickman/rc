@@ -1,0 +1,191 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+TOTAL = '**total**'.freeze
+BLANK = '**blank**'.freeze
+
+class Report
+  def initialize(data)
+    @data = data
+
+    @column_headings = []
+  end
+
+  def display
+    extract_column_headings
+    display_headings
+    display_report
+  end
+
+  private
+
+  def extract_column_headings
+    @data.each do |_, v|
+      v.keys.each do |c|
+        @column_headings << c unless @column_headings.include?(c)
+      end
+    end
+
+    @column_headings.sort!
+
+    @column_headings.delete(TOTAL)
+
+    ##
+    # If there is only 1 column the total column would
+    # be the same so we drop it. Otherwise we want the
+    # total column to be at the end and not mixed in
+    ##
+    @column_headings.push(TOTAL) if @column_headings.size != 1
+  end
+
+  def display_headings
+    find_row_width
+
+    print(' ' * @row_width)
+    @column_headings.each do |heading|
+      text = heading == '' ? BLANK : heading
+      print(format(' : %12s', text))
+    end
+    puts
+
+    print('-' * @row_width)
+    @column_headings.each { print('-+-------------') }
+    puts
+  end
+
+  def display_report
+    row_names = @data.keys.sort
+
+    row_names.delete(TOTAL)
+
+    row_names.each do |row_name|
+      display_row(row_name)
+    end
+
+    return if row_names.size == 1
+
+    print('-' * @row_width)
+    @column_headings.each { print('-+-------------') }
+    puts
+    display_row(TOTAL)
+  end
+
+  def display_row(row_name)
+    print(format("%-#{@row_width}s", row_name))
+    @column_headings.each do |heading|
+      value = @data[row_name][heading]
+      if value
+        print(format(' : %12.2f', value))
+      else
+        print(format(' : %12s', '-.--'))
+      end
+    end
+    puts
+  end
+
+  def find_row_width
+    @row_width = @data.keys.map(&:size).max
+  end
+end
+
+class CollectData
+  attr_reader :data
+
+  def initialize(rows, column, value)
+    @rows = rows
+    @column = column
+    @value = value
+
+    @column = @column.first.to_i if @column && @column.any?
+    @value = @value.first.to_i if @value && @value.any?
+
+    @data = {}
+  end
+
+  def load(filename)
+    File.open(filename, 'r').each do |line|
+      row = line.chomp.split(/\t/)
+
+      [make_row_key(row), TOTAL].each do |row_key|
+        @data[row_key] = {} unless @data.key?(row_key)
+
+        if @column
+          add_direct(row_key, row, row[@column].to_s)
+          add_direct(row_key, row, TOTAL)
+        else
+          add_direct(row_key, row, BLANK)
+        end
+      end
+    end
+  end
+
+  private
+
+  def add_direct(row_key, row, column_name)
+    @data[row_key][column_name] = 0.0 unless @data[row_key].key?(column_name)
+    @data[row_key][column_name] += (@value ? row[@value].to_f : 1.0)
+  end
+
+  def make_row_key(list)
+    x = @rows.map { |r| list[r] }.compact.join(' - ')
+    x = BLANK if x.empty?
+    x
+  end
+end
+
+class Options
+  VALID_KEYS = %w[rows column value]
+
+  def self.parse_command_line
+    options = {}
+    filenames = []
+    skip_next = false
+
+    ARGV.each_with_index do |arg, i|
+      if arg.start_with?('--')
+        key = arg[2..-1].downcase
+        options[key] = [] unless options.key?(key)
+
+        options[key] += ARGV[i + 1].split(',').map(&:to_i)
+        skip_next = true
+      elsif skip_next == true
+        skip_next = false
+      else
+        filenames << arg
+      end
+    end
+
+    raise "No data files to read" if filenames.empty?
+
+    check_options(options)
+
+    [options, filenames]
+  end
+
+  def self.check_options(options)
+    unknown_options = []
+
+    options.keys.each do |option|
+      unknown_options << option unless VALID_KEYS.include?(option)
+    end
+
+    raise "Unknown option(s) #{unknown_options.inspect}" if unknown_options.any?
+
+    raise "The option '--rows' must be supplied, the rest are optional" unless options.key?('rows')
+  end    
+end
+
+options, filenames = Options.parse_command_line
+
+rows = options['rows']
+column = options['column']
+value = options['value']
+
+c = CollectData.new(rows, column, value)
+
+filenames.each do |filename|
+  c.load(filename)
+end
+
+r = Report.new(c.data)
+r.display

@@ -32,7 +32,7 @@ Some examples will make things clear :)
 
 The `sales.csv` file contains some example data. Assume it is a list of sales from various towns by region. The first column is the region, the second the town and the third column the value of the sale
 
-|0|1|2|
+|`column 0`|`column 1`|`column 2`|
 |---|---|---|
 |Scotland|Aberdeen|3|
 |Wales|Swansea|3|

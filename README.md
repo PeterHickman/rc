@@ -42,6 +42,7 @@ The `sales.csv` file contains some example data. Assume it is a list of sales fr
 |England|Bath|3|
 |England|Bath|3|
 |England|London|3|
+|...|...|...|
 
 ```shell
 $ rc --rows 0 sales.csv
@@ -85,7 +86,7 @@ Now we will have a look how the `--column` option changes things
 $ rc --rows 0 --column 1 sales.csv
 ```
 
-Gives (in slightly abbreviated form) the same report as our first example but with values at the town level. Cells showing `-.--` have no data rather than a value of `0.00`, given that Aberdeen is not in England. If we add the `--value 2` option then we would get the values of the sales by town
+Gives (in slightly abbreviated form) the same report as our first example but with values at the town level. Given that Aberdeen is not in England cells showing `-.--` have no data rather than a value of `0.00`. If we add the `--value 2` option then we would get the values of the sales by town
 
 ```
           :     Aberdeen :         Bath :       Brecon :      ...     :    **total**

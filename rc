@@ -4,6 +4,8 @@
 TOTAL = '**total**'.freeze
 BLANK = '**blank**'.freeze
 
+TAB = "\t".freeze
+
 class Report
   def initialize(data)
     @data = data
@@ -91,10 +93,11 @@ end
 class CollectData
   attr_reader :data
 
-  def initialize(rows, column, value)
+  def initialize(rows, column, value, delimiter)
     @rows = rows
     @column = column
     @value = value
+    @delimiter = delimiter || TAB
 
     @column = @column.first.to_i if @column && @column.any?
     @value = @value.first.to_i if @value && @value.any?
@@ -104,7 +107,7 @@ class CollectData
 
   def load(filename)
     File.open(filename, 'r').each do |line|
-      row = line.chomp.split(/\t/)
+      row = line.chomp.split(@delimiter)
 
       [make_row_key(row), TOTAL].each do |row_key|
         @data[row_key] = {} unless @data.key?(row_key)
@@ -134,7 +137,8 @@ class CollectData
 end
 
 class Options
-  VALID_KEYS = %w[rows column value]
+  VALID_KEYS = %w[rows column value delimiter]
+  NUMERICS = %w[rows column value]
 
   def self.parse_command_line
     options = {}
@@ -146,7 +150,11 @@ class Options
         key = arg[2..-1].downcase
         options[key] = [] unless options.key?(key)
 
-        options[key] += ARGV[i + 1].split(',').map(&:to_i)
+        if NUMERICS.include?(key)
+          options[key] += ARGV[i + 1].split(',').map(&:to_i)
+        else
+          options[key] = ARGV[i + 1]
+        end
         skip_next = true
       elsif skip_next == true
         skip_next = false
@@ -179,9 +187,10 @@ options, filenames = Options.parse_command_line
 
 rows = options['rows']
 column = options['column']
-value = options['value']
+value = options['value'] 
+delimiter = options['delimiter']
 
-c = CollectData.new(rows, column, value)
+c = CollectData.new(rows, column, value, delimiter)
 
 filenames.each do |filename|
   c.load(filename)

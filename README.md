@@ -10,7 +10,6 @@ I was chopping some data out of some `.csv` files for the umteenth time and fina
 
 As this tool is just for me there are some _limitations_ that might irk you. So far this meets my needs and the motivation to fix them is rather low
 
-* The data has to be `tab` seperated. I know the files it processes are `.csv` and should support at least the `comma` but it works for me
 * You can only give a single column despite being able to supply multiple rows. My reports are already wide enough as they are
 * I am a programmer so the first column in the file is refered to as `0` and the second as `1` etc
 * There is very little error checking :(
@@ -25,6 +24,7 @@ $ rc --rows 0 --column 1 --value 2 sales.csv
 * **`--rows`** is a required option and should be a list of columns that will be combined to create the rows of the report
 * **`--column`** is an optional column that specifies the column that will make up the columns of the report
 * **`--value`** is the optional column (assumed to be a number of some sort) that will be accumulated
+* **`--delimiter`** is the optional column delimiter. The default value is a tab, but you can change it to a comma
 
 Some examples will make things clear :)
 
